@@ -1,0 +1,53 @@
+{
+  "id": "software-provenance-attestation",
+  "version": "1.0.0",
+  "schema": {
+    "protocol": "software-provenance-attestation",
+    "version": "1.0.0",
+    "event": {
+      "actor": "string  — who acted (one of: builder, publisher, consumer)",
+      "kind": "string  — one of: build.started, build.completed, artifact.published",
+      "payload_digest": "string  — 64-hex SHA-256 of the event payload",
+      "asserted_at": "string  — RFC 3339 UTC, three fractional digits, literal Z"
+    },
+    "authority": {
+      "model": "builder-attested",
+      "jurisdictions": [
+        "US",
+        "EU"
+      ]
+    },
+    "interoperates_with": [
+      "SLSA",
+      "in-toto",
+      "Sigstore"
+    ],
+    "evidence": {
+      "leaf": "string  — SHA-256('PSI1:' || payload_digest)",
+      "anchor": "string  — receipt id returned by the live seal primitive"
+    }
+  },
+  "evidence_rule": "Every event is sealed via the live APEX PSI primitive; the resulting receipt id or payload digest is verifiable keyless and free by anyone.",
+  "canonical_schema_digest": "7f6f291b5d5f3984b546bc1a7e06ca1c25138b31edfca488ee2fe2877bba7be5",
+  "conformance": {
+    "vectors_dir": "vectors/",
+    "passed": 24,
+    "failed": 0
+  },
+  "reference_impl": {
+    "seal": "POST https://qhtntebpcribjiwrdtdd.supabase.co/functions/v1/psi-api/v1/notarize  (keyed, metered)",
+    "verify": "GET https://qhtntebpcribjiwrdtdd.supabase.co/functions/v1/psi-api/v1/verify/<digest-or-receipt-id>  (keyless, free)"
+  },
+  "status": {
+    "spec_generated": true,
+    "conformance_vectors_pass": true,
+    "reference_seal_wired_live": true,
+    "reference_verify_live": true,
+    "published": false,
+    "ietf_filed": false,
+    "first_external_installer": false,
+    "first_customer": false,
+    "regulatory_cited": false
+  },
+  "generated_at": "2026-10-04T19:35:51.741Z"
+}

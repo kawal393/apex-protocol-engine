@@ -1,0 +1,75 @@
+[
+  {
+    "canonical": "{\"a\":{\"x\":3,\"y\":2},\"b\":1,\"c\":[1,2,3]}",
+    "input": {
+      "a": {
+        "x": 3,
+        "y": 2
+      },
+      "b": 1,
+      "c": [
+        1,
+        2,
+        3
+      ]
+    }
+  },
+  {
+    "canonical": "{\"a\":\"world\",\"m\":[true,false,null,42],\"z\":\"hello\"}",
+    "input": {
+      "a": "world",
+      "m": [
+        true,
+        false,
+        null,
+        42
+      ],
+      "z": "hello"
+    }
+  },
+  {
+    "canonical": "{\"only\":\"one\"}",
+    "input": {
+      "only": "one"
+    }
+  },
+  {
+    "canonical": "{\"caf\u00e9\":1,\"na\u00efve\":2}",
+    "input": {
+      "caf\u00e9": 1,
+      "na\u00efve": 2
+    }
+  },
+  {
+    "canonical": "{\"\u65e5\u672c\u8a9e\":\"ok\",\"\ud83d\ude00\":\"astral\"}",
+    "input": {
+      "\u65e5\u672c\u8a9e": "ok",
+      "\ud83d\ude00": "astral"
+    }
+  },
+  {
+    "canonical": "{\"a\":0,\"b\":100000000000000000000,\"c\":1e+21,\"d\":1.5}",
+    "input": {
+      "a": -0.0,
+      "b": 1e+20,
+      "c": 1e+21,
+      "d": 1.5
+    }
+  },
+  {
+    "canonical": "{\"E\":4,\"e\":1,\"\u00fc\":2}",
+    "input": {
+      "E": 4,
+      "e": 1,
+      "\u00fc": 2
+    }
+  },
+  {
+    "canonical": "{\"back\\\\slash\":2,\"quote\\\"key\":1,\"tab\\there\":3}",
+    "input": {
+      "back\\slash": 2,
+      "quote\"key": 1,
+      "tab\there": 3
+    }
+  }
+]

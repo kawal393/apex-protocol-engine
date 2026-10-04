@@ -1,0 +1,56 @@
+{
+  "id": "agent-action-evidence",
+  "version": "1.0.0",
+  "schema": {
+    "protocol": "agent-action-evidence",
+    "version": "1.0.0",
+    "event": {
+      "actor": "string  — who acted (one of: agent, principal, tool, observer)",
+      "kind": "string  — one of: action.proposed, action.executed, action.refused, action.result",
+      "payload_digest": "string  — 64-hex SHA-256 of the event payload",
+      "asserted_at": "string  — RFC 3339 UTC, three fractional digits, literal Z"
+    },
+    "authority": {
+      "model": "principal-on-behalf-of",
+      "jurisdictions": [
+        "EU",
+        "US",
+        "UK"
+      ]
+    },
+    "interoperates_with": [
+      "MCP",
+      "A2A",
+      "SCITT",
+      "OIDC",
+      "W3C-VC"
+    ],
+    "evidence": {
+      "leaf": "string  — SHA-256('PSI1:' || payload_digest)",
+      "anchor": "string  — receipt id returned by the live seal primitive"
+    }
+  },
+  "evidence_rule": "Every event is sealed via the live APEX PSI primitive; the resulting receipt id or payload digest is verifiable keyless and free by anyone.",
+  "canonical_schema_digest": "f0a42775cf5ba6ac1dd88f6c753e1711bd6dff31c3d9b5088b64f5378207123a",
+  "conformance": {
+    "vectors_dir": "vectors/",
+    "passed": 24,
+    "failed": 0
+  },
+  "reference_impl": {
+    "seal": "POST https://qhtntebpcribjiwrdtdd.supabase.co/functions/v1/psi-api/v1/notarize  (keyed, metered)",
+    "verify": "GET https://qhtntebpcribjiwrdtdd.supabase.co/functions/v1/psi-api/v1/verify/<digest-or-receipt-id>  (keyless, free)"
+  },
+  "status": {
+    "spec_generated": true,
+    "conformance_vectors_pass": true,
+    "reference_seal_wired_live": true,
+    "reference_verify_live": true,
+    "published": false,
+    "ietf_filed": false,
+    "first_external_installer": false,
+    "first_customer": false,
+    "regulatory_cited": false
+  },
+  "generated_at": "2026-10-04T19:35:51.128Z"
+}

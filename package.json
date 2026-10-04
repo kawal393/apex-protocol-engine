@@ -1,0 +1,25 @@
+{
+  "name": "apex-protocol-engine",
+  "version": "0.1.0",
+  "description": "APEX Protocol Engine — the machine that mints coordination protocols, wires them to the live APEX PSI seal/verify primitive, and registers them with honest status. Priority 1 (Engine) + Priority 2 (Registry) of the APEX Master Business Model.",
+  "type": "module",
+  "bin": {
+    "engine": "dist/cli.js"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "engine": "tsx src/cli.ts",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "status": "tsx src/cli.ts status",
+    "proof": "tsx src/cli.ts proof"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "license": "Apache-2.0",
+  "devDependencies": {
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0",
+    "@types/node": "^22.0.0"
+  }
+}

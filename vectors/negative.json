@@ -1,0 +1,14 @@
+{
+  "leaf_differs_on_hash": {
+    "correct_leaf": "622f9affe4a2c4f1353ae1da3021babdc084afc722b12daa6b7c87e174c260c0",
+    "wrong_leaf": "6b2ec0657a08aa6f69c67eafa3eb82e04053ff226b905c6141045f381f056756"
+  },
+  "merkle_differs_on_reorder": {
+    "ab": "f08c9148e5a11fdd4c373caf026a2c3b63183d268b4b0eec9a7f2a5d143a187a",
+    "ba": "021bb58cfa553fcb5a799c1b85ff76efda9e5c61611bb1b40d76df4def79d583"
+  },
+  "sha_differs_on_input": {
+    "a": "b35c64e20ababba4bcd148911e8095bb1b6a583021d1c68ec83b4a3500574736",
+    "b": "c681970716079b151559eff025537053cab751deae146716816beb009ad286f1"
+  }
+}

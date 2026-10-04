@@ -1,0 +1,8 @@
+# Preserve byte-exact files. The conformance vectors and sealed bundles are
+# hash-anchored; line endings must never be rewritten by Git on checkout.
+* text=auto eol=lf
+*.json text eol=lf
+*.ts text eol=lf
+*.md text eol=lf
+*.png binary
+*.jpg binary
