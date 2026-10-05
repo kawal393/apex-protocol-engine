@@ -1,0 +1,303 @@
+<!doctype html>
+<html lang="en" class="dark">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>APEX PSI — Independent Verification</title>
+<meta name="description" content="Verify any APEX PSI receipt or SHA-256 record against the append-only ledger. Free, keyless, forever. Verification proves existence, timestamp and integrity — not the truth of any claim." />
+<meta name="author" content="APEX Infrastructure" />
+<meta name="theme-color" content="#d4a017" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<!-- Same font contract as the live estate (apex-psi-live/src/index.css). -->
+<link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+<style>
+  /* Token contract copied from apex-psi-live/src/index.css :root (HSL, dark).
+     This page renders with the identical palette the estate React app uses. */
+  :root{
+    --background:240 15% 4%;  --foreground:210 15% 90%;
+    --card:240 12% 8%;        --card-foreground:210 15% 90%;
+    --primary:41 52% 48%;     --primary-foreground:240 15% 4%;
+    --secondary:240 10% 14%;  --muted:240 8% 12%;  --muted-foreground:210 10% 55%;
+    --accent:40 45% 42%;
+    --destructive:0 84% 60%;
+    --border:240 8% 14%;      --input:240 8% 14%;  --ring:43 85% 52%;
+    --gold:41 52% 48%;        --gold-glow:41 55% 56%;  --chrome:220 10% 70%;
+    --compliant:142 76% 36%;  --warning:38 92% 50%;
+    --radius:0.5rem;
+    --serif:'Libre Baskerville', Georgia, serif;
+    --sans:'Inter', system-ui, sans-serif;
+    --mono:'IBM Plex Mono', ui-monospace, monospace;
+  }
+  *{ box-sizing:border-box; }
+  html{ scroll-behavior:smooth; }
+  body{
+    margin:0; background:hsl(var(--background)); color:hsl(var(--foreground));
+    font-family:var(--sans); font-size:16px; line-height:1.6;
+    -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
+    min-height:100vh; display:flex; flex-direction:column;
+  }
+  a{ color:hsl(var(--ring)); text-decoration:none; }
+  a:hover{ text-decoration:underline; }
+  .grid-bg{ background-image:linear-gradient(hsl(var(--border)/.35) 1px,transparent 1px),linear-gradient(90deg,hsl(var(--border)/.35) 1px,transparent 1px); background-size:44px 44px; }
+  .wrap{ width:100%; max-width:768px; margin:0 auto; padding:0 20px; }
+
+  /* Navbar */
+  header.nav{ position:sticky; top:0; z-index:20; backdrop-filter:blur(10px); background:hsl(var(--background)/.7); border-bottom:1px solid hsl(var(--border)); }
+  .nav-in{ display:flex; align-items:center; justify-content:space-between; padding:18px 0; }
+  .brand{ font-family:var(--serif); font-weight:700; letter-spacing:.12em; font-size:16px; color:hsl(var(--foreground)); text-transform:uppercase; }
+  .brand b{ color:hsl(var(--ring)); font-weight:700; }
+  .nav-in .tag{ font-family:var(--mono); font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:hsl(var(--muted-foreground)); }
+
+  main{ flex:1; }
+  .hero{ position:relative; padding:56px 20px 20px; text-align:center; overflow:hidden; }
+  .hero::after{ content:''; position:absolute; top:50%; left:50%; width:600px; height:600px; transform:translate(-50%,-50%); border-radius:50%; pointer-events:none; background:radial-gradient(circle, hsl(43 85% 52% / .06) 0%, transparent 60%); }
+  .hero-in{ position:relative; z-index:1; max-width:600px; margin:0 auto; }
+  .badge{ display:inline-block; font-family:var(--mono); font-size:11px; letter-spacing:.16em; text-transform:uppercase; color:hsl(var(--primary)); border:1px solid hsl(var(--primary)/.3); border-radius:999px; padding:5px 14px; margin-bottom:20px; }
+  h1{ font-family:var(--serif); font-weight:700; font-size:clamp(28px,5.5vw,44px); line-height:1.12; margin:0 0 18px; }
+  h1 .chrome{ background:linear-gradient(180deg,hsl(var(--chrome)),hsl(220 10% 45%)); -webkit-background-clip:text; background-clip:text; color:transparent; }
+  h1 .gold{ background:linear-gradient(120deg,hsl(var(--gold)),hsl(var(--ring)) 55%,hsl(var(--gold-glow))); -webkit-background-clip:text; background-clip:text; color:transparent; }
+  .lede{ color:hsl(var(--muted-foreground)); font-size:clamp(14px,2vw,16px); max-width:52ch; margin:0 auto; }
+
+  /* Verifier card */
+  .card{ background:hsl(var(--card)/.8); backdrop-filter:blur(6px); border:1px solid hsl(var(--border)); border-radius:.75rem; }
+  .panel{ padding:24px; margin:34px auto 8px; max-width:640px; }
+  .label{ font-family:var(--mono); font-size:11px; letter-spacing:.2em; text-transform:uppercase; color:hsl(var(--muted-foreground)); margin:0 0 16px; display:flex; align-items:center; gap:8px; }
+  .label svg{ width:15px; height:15px; stroke:hsl(var(--ring)); }
+  .field{ display:flex; gap:10px; }
+  .input-wrap{ position:relative; flex:1; }
+  .input-wrap svg{ position:absolute; left:12px; top:50%; transform:translateY(-50%); width:16px; height:16px; stroke:hsl(var(--muted-foreground)); pointer-events:none; }
+  input[type=text]{
+    width:100%; background:hsl(var(--card)); color:hsl(var(--foreground)); border:1px solid hsl(var(--border));
+    border-radius:var(--radius); padding:14px 14px 14px 36px; font-family:var(--mono); font-size:14px;
+    transition:border-color .4s ease, box-shadow .4s ease;
+  }
+  input::placeholder{ color:hsl(var(--muted-foreground)/.7); }
+  input:focus{ outline:none; border-color:hsl(var(--ring)/.5); box-shadow:0 0 0 3px hsl(43 85% 52% / .12); }
+  .btn{
+    background:hsl(var(--primary)); color:hsl(var(--primary-foreground)); border:1px solid hsl(var(--primary));
+    border-radius:var(--radius); padding:0 22px; min-height:48px; font-family:var(--mono); font-size:13px;
+    letter-spacing:.08em; text-transform:uppercase; cursor:pointer; display:inline-flex; align-items:center; gap:8px;
+    transition:filter .4s ease, box-shadow .4s ease; white-space:nowrap;
+  }
+  .btn:hover:not(:disabled){ filter:brightness(1.08); box-shadow:0 0 14px hsl(43 85% 52% / .35); }
+  .btn:disabled{ opacity:.55; cursor:default; }
+  .btn svg{ width:16px; height:16px; }
+  .hint{ font-family:var(--mono); font-size:11px; color:hsl(var(--muted-foreground)); margin:16px 0 0; line-height:1.6; text-align:center; }
+  .hint code{ color:hsl(var(--compliant)); }
+  .spin{ width:16px; height:16px; border:2px solid hsl(var(--primary-foreground)); border-top-color:transparent; border-radius:50%; animation:rot .8s linear infinite; }
+  @keyframes rot{ to{ transform:rotate(360deg);} }
+
+  /* Result plate */
+  .result{ margin-top:22px; border-radius:.75rem; padding:0; overflow:hidden; display:none; }
+  .result.show{ display:block; animation:rise .5s ease; }
+  @keyframes rise{ from{ opacity:0; transform:translateY(10px);} to{ opacity:1; transform:none;} }
+  .result .band{ display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; padding:16px 20px; border-bottom:1px solid hsl(var(--border)); }
+  .result .band .id{ display:flex; align-items:center; gap:10px; }
+  .result .band svg{ width:22px; height:22px; }
+  .result .t{ font-weight:800; font-size:14px; letter-spacing:.04em; }
+  .result .s{ font-size:11px; color:hsl(var(--muted-foreground)); }
+  .chip{ font-family:var(--mono); font-size:11px; letter-spacing:.06em; padding:4px 12px; border-radius:999px; border:1px solid transparent; }
+  dl{ margin:0; padding:18px 20px; display:grid; grid-template-columns:118px 1fr; gap:11px 16px; font-size:13px; }
+  dt{ color:hsl(var(--muted-foreground)); }
+  dd{ margin:0; color:hsl(var(--foreground)); word-break:break-all; text-align:right; font-family:var(--mono); font-size:12px; }
+  .result .foot{ border-top:1px solid hsl(var(--border)); padding:10px 20px; font-family:var(--mono); font-size:10px; color:hsl(var(--muted-foreground)); letter-spacing:.04em; }
+  .result .action{ border-top:1px solid hsl(var(--border)); padding:16px 20px; display:flex; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap; background:linear-gradient(135deg,hsl(43 85% 52% / .05),transparent); }
+  .result .action .ask{ font-size:13px; color:hsl(var(--foreground)); }
+  .result .action .ask span{ display:block; font-family:var(--mono); font-size:10px; color:hsl(var(--muted-foreground)); letter-spacing:.04em; margin-top:3px; }
+  .btn-up{ background:hsl(var(--primary)); color:hsl(var(--primary-foreground)); border:1px solid hsl(var(--primary)); border-radius:var(--radius); padding:11px 18px; font-family:var(--mono); font-size:12px; letter-spacing:.06em; text-transform:uppercase; white-space:nowrap; transition:filter .4s ease, box-shadow .4s ease; }
+  .btn-up:hover{ text-decoration:none; filter:brightness(1.08); box-shadow:0 0 14px hsl(43 85% 52% / .35); }
+  .zero{ padding:14px 20px 18px; font-size:12px; color:hsl(var(--muted-foreground)); border-top:1px dashed hsl(var(--border)); }
+
+  .result.ok   { background:hsl(var(--compliant)/.05); border:1px solid hsl(var(--compliant)/.3); }
+  .result.ok .t{ color:hsl(var(--compliant)); } .result.ok .band{ background:linear-gradient(135deg,hsl(142 76% 36% / .08),transparent); } .result.ok svg{ stroke:hsl(var(--compliant)); }
+  .result.ok .chip{ background:hsl(var(--compliant)/.1); color:hsl(var(--compliant)); border-color:hsl(var(--compliant)/.3); }
+  .result.warn { background:hsl(var(--warning)/.05); border:1px solid hsl(var(--warning)/.3); }
+  .result.warn .t{ color:hsl(var(--warning)); } .result.warn svg{ stroke:hsl(var(--warning)); }
+  .result.warn .chip{ background:hsl(var(--warning)/.1); color:hsl(var(--warning)); border-color:hsl(var(--warning)/.3); }
+  .result.bad  { background:hsl(var(--destructive)/.05); border:1px solid hsl(var(--destructive)/.3); }
+  .result.bad .t{ color:hsl(var(--destructive)); } .result.bad svg{ stroke:hsl(var(--destructive)); }
+  .result.bad .center{ padding:26px 20px; text-align:center; }
+
+  /* Two columns */
+  .cols{ display:grid; grid-template-columns:1fr 1fr; gap:18px; margin:48px auto; max-width:768px; }
+  .cols .card{ padding:22px; }
+  .cols h2{ font-family:var(--serif); font-weight:700; font-size:18px; margin:0 0 12px; color:hsl(var(--foreground)); }
+  .cols p{ color:hsl(var(--muted-foreground)); font-size:13px; margin:0 0 10px; }
+  .cols ul{ margin:0; padding-left:18px; color:hsl(var(--muted-foreground)); font-size:13px; }
+  .cols li{ margin:5px 0; }
+  .cta{ display:inline-block; margin-top:6px; background:hsl(var(--primary)); color:hsl(var(--primary-foreground)); font-family:var(--mono); font-size:12px; letter-spacing:.06em; text-transform:uppercase; padding:12px 20px; border-radius:var(--radius); transition:filter .4s ease, box-shadow .4s ease; }
+  .cta:hover{ text-decoration:none; filter:brightness(1.08); box-shadow:0 0 14px hsl(43 85% 52% / .35); }
+  .price{ font-family:var(--mono); font-size:11px; color:hsl(var(--muted-foreground)); margin-top:12px; }
+  .price b{ color:hsl(var(--foreground)); font-weight:600; }
+
+  footer.site{ border-top:1px solid hsl(var(--border)); margin-top:32px; }
+  .plaque{ padding:30px 0 8px; color:hsl(var(--muted-foreground)); font-size:13px; max-width:60ch; }
+  .plaque .fine{ font-family:var(--mono); font-size:10px; letter-spacing:.02em; line-height:1.8; color:hsl(var(--muted-foreground)/.7); margin-top:12px; }
+  .foot-bar{ display:flex; justify-content:space-between; gap:16px; padding:16px 0 28px; font-family:var(--mono); font-size:10px; color:hsl(var(--muted-foreground)); letter-spacing:.08em; text-transform:uppercase; }
+
+  @media (max-width:620px){ .cols{ grid-template-columns:1fr; } .field{ flex-direction:column; } .btn{ min-height:46px; } dl{ grid-template-columns:1fr; gap:4px 0; } dd{ text-align:left; margin-bottom:8px; } }
+</style>
+</head>
+<body>
+<header class="nav">
+  <div class="wrap nav-in">
+    <div class="brand">APEX<b>·</b>PSI</div>
+    <div class="tag">Independent Verification</div>
+  </div>
+</header>
+
+<main>
+  <section class="hero grid-bg">
+    <div class="hero-in">
+      <span class="badge">Public Verification Portal</span>
+      <h1><span class="chrome">Independent</span> <span class="gold">Verification</span></h1>
+      <p class="lede">Paste any APEX PSI receipt id or SHA-256 record hash. The ledger answers one question and nothing else: did this exist, when, and has it changed since. It does not judge whether the claim is true.</p>
+    </div>
+  </section>
+
+  <section class="wrap">
+    <div class="card panel" aria-label="Verification">
+      <p class="label">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="1.6"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+        Independent hash verification
+      </p>
+      <div class="field">
+        <div class="input-wrap">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="1.6"><path d="M4 7h16M4 12h16M4 17h10"/></svg>
+          <input id="q" type="text" spellcheck="false" autocomplete="off" placeholder="Paste receipt id (APEX-…) or SHA-256 hash…" />
+        </div>
+        <button class="btn" id="go" type="button">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+          <span id="golabel">Verify</span>
+        </button>
+      </div>
+      <p class="hint">Read path is open and needs no account. <code>GET /v1/verify/&lt;id-or-hash&gt;</code> · try the sample <code>APEX-NTR-0C4763D473FD7D93</code></p>
+
+      <div class="result" id="result" role="status" aria-live="polite"></div>
+    </div>
+  </section>
+
+  <section class="wrap">
+    <div class="cols">
+      <div class="card">
+        <h2>What verification proves</h2>
+        <p>A seal is a statement about a record, not about the world. Held apart on purpose:</p>
+        <ul>
+          <li>Existence at a signed time</li>
+          <li>Integrity — unchanged since sealing</li>
+          <li>Post-quantum inclusion in the Merkle ledger</li>
+        </ul>
+        <p style="margin-top:12px">It never proves the record is true, lawful, safe or wise.</p>
+      </div>
+      <div class="card">
+        <h2>Issue your own seals</h2>
+        <p>Checking is free and always will be. Paid tiers are for hosted issuance at scale — you buy process, never a verdict.</p>
+        <a class="cta" href="https://apex-infrastructure.com" rel="noopener">Get an API key &amp; seal</a>
+        <p class="price"><b>Free</b> 100/day · <b>Pro</b> 2,000 · <b>Ultra</b> 20,000 · self-host unlimited</p>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="site">
+  <div class="wrap">
+    <div class="plaque">
+      This record certifies existence, timestamp and integrity — not the truth of any claim. The ledger does not judge. It remembers.
+      <div class="fine">APEX PSI is an open verification protocol and proposed standard under active development. It is not a conformity assessment or a legal certification.</div>
+    </div>
+    <div class="foot-bar">
+      <span>APEX Infrastructure</span>
+      <span><a href="https://github.com/kawal393/apex-protocol-engine" rel="noopener">Open verifier &amp; SDK</a></span>
+    </div>
+  </div>
+</footer>
+
+<script>
+(function(){
+  "use strict";
+  var BASE = (window.APEX_PSI_BASE || "https://qhtntebpcribjiwrdtdd.supabase.co/functions/v1/psi-api");
+  // Upgrade funnel target: the signed-in tier picker that already wraps the
+  // auth-gated Stripe checkout. Verification itself stays free and keyless;
+  // this link only routes a person who wants to ISSUE records at scale.
+  var UPGRADE_URL = (window.APEX_UPGRADE_URL || "https://ai-governance-standard.com/upgrade");
+  var q = document.getElementById('q'), go = document.getElementById('go'), golabel = document.getElementById('golabel');
+  var box = document.getElementById('result');
+
+  function esc(s){ return String(s == null ? '' : s).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+  function row(label, val){ return '<dt>' + esc(label) + '</dt><dd>' + val + '</dd>'; }
+
+  function render(d){
+    if(d.found && d.verified){
+      box.className = 'result show ok';
+      var html = '<div class="band"><div class="id">'
+        + '<svg viewBox="0 0 24 24" fill="none" stroke-width="1.6"><path d="M12 2l7 4v6c0 5-3 8-7 10-4-2-7-5-7-10V6z"/><path d="M9 12l2 2 4-4"/></svg>'
+        + '<div><p class="t">HASH VERIFIED</p><p class="s">Found in APEX PSI append-only ledger</p></div></div>'
+        + '<span class="chip">' + esc(d.phase || 'VERIFIED') + '</span></div>';
+      var r = '';
+      if(d.commit_id)    r += row('Commit ID', esc(d.commit_id));
+      if(d.predicate_id) r += row('Predicate', esc(d.predicate_id));
+      if(d.phase)        r += row('Phase', esc(d.phase));
+      if(d.status)       r += row('Status', esc(d.status));
+      if(d.merkle_root)  r += row('Merkle Root', esc(d.merkle_root));
+      if(d.algorithm)    r += row('Algorithm', esc(d.algorithm));
+      if(d.queried_at)   r += row('Verified at', esc(d.queried_at));
+      // Carry the queried id so the return path can re-check it after upgrade.
+      var _ctx = encodeURIComponent(d.commit_id || d.queried_hash || (q && q.value ? q.value.trim() : ''));
+      var _up = UPGRADE_URL + '?intent=seal&from=verify&hash=' + _ctx;
+      html += '<dl>' + r + '</dl>'
+        + '<div class="zero">What this proves: the record existed at a signed time and has not changed. What it cannot prove: whether the claim inside it is true.</div>'
+        + '<div class="action"><div class="ask">Verified free — this checked the ledger, nothing else.'
+        +   '<span>Seal your own records at scale &mdash; you buy process, never a verdict.</span></div>'
+        +   '<a class="btn-up" href="' + _up + '" rel="noopener">Seal your own &rarr;</a></div>'
+        + '<div class="foot">' + esc(d.engine || 'APEX PSI v1') + (d.algorithm ? ' — ' + esc(d.algorithm) : '') + '</div>';
+      box.innerHTML = html;
+    } else if(d.found){
+      box.className = 'result show warn';
+      box.innerHTML = '<div class="band"><div class="id">'
+        + '<svg viewBox="0 0 24 24" fill="none" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>'
+        + '<div><p class="t">RECORD FOUND — AWAITING PROOF</p><p class="s">Present in the ledger; Merkle proof not yet attached</p></div></div></div>';
+    } else {
+      box.className = 'result show bad';
+      box.innerHTML = '<div class="center">'
+        + '<svg viewBox="0 0 24 24" fill="none" stroke-width="1.6" style="width:40px;height:40px;margin:0 auto 12px;display:block;stroke:hsl(var(--destructive))"><path d="M12 2l7 4v6c0 5-3 8-7 10-4-2-7-5-7-10V6z"/><path d="M9 9l6 6M15 9l-6 6"/></svg>'
+        + '<p class="t" style="color:hsl(var(--destructive));font-weight:800;margin-bottom:6px">NOT FOUND IN LEDGER</p>'
+        + '<p class="s" style="max-width:36ch;margin:0 auto 14px">This hash or receipt does not exist in the APEX PSI append-only ledger.</p>'
+        + '<div style="border:1px solid hsl(var(--border));background:hsl(var(--background)/.6);border-radius:.5rem;padding:10px;font-family:var(--mono);font-size:12px;color:hsl(var(--muted-foreground));word-break:break-all">' + esc((d.queried_hash||'').length>48 ? (d.queried_hash||'').slice(0,48)+'…' : (d.queried_hash||'')) + '</div></div>';
+    }
+  }
+
+  function errorPlate(text){
+    box.className = 'result show bad';
+    box.innerHTML = '<div class="center">'
+      + '<p class="t" style="color:hsl(var(--destructive));font-weight:800;margin-bottom:6px">LOOKUP FAILED</p>'
+      + '<p class="s" style="max-width:44ch;margin:0 auto">' + esc(text) + '</p></div>';
+  }
+
+  async function verify(){
+    var target = (q.value || '').trim();
+    if(!target){ return; }
+    box.className = 'result'; go.disabled = true; golabel.textContent = 'Checking';
+    try{
+      var res = await fetch(BASE + '/v1/verify/' + encodeURIComponent(target), { headers:{ 'Accept':'application/json' }, cache:'no-store' });
+      if(!res.ok){ errorPlate('The verification service returned HTTP ' + res.status + '. The record was not confirmed.'); return; }
+      var d = await res.json();
+      if(!d.queried_hash){ d.queried_hash = target; }
+      render(d);
+    }catch(err){
+      errorPlate('Network or CORS error reaching the ledger (' + ((err && err.message) ? err.message : 'unknown') + '). Nothing was found or denied — retry shortly.');
+    }finally{
+      go.disabled = false; golabel.textContent = 'Verify';
+    }
+  }
+
+  go.addEventListener('click', verify);
+  q.addEventListener('keydown', function(e){ if(e.key === 'Enter'){ verify(); } });
+
+  // Deep link: /verify.html?hash=<id-or-digest> auto-runs, mirroring the estate SPA.
+  var param = new URLSearchParams(window.location.search).get('hash');
+  if(param){ q.value = param; verify(); }
+})();
+</script>
+</body>
+</html>
