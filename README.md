@@ -1,81 +1,63 @@
-# Apex Protocol Engine
+# APEX PSI — Open Verification Standard & SDK
 
-The machine that turns a coordination problem into a protocol, wires it to a real
-cryptographic evidence primitive, and registers it with **honest, verifiable status**.
+The **public** layer of APEX PSI: an open, verifiable evidence standard, the
+reference verifier, published test vectors, and a thin SDK client.
 
-This is Priority 1 (Engine) + Priority 2 (Registry) of the APEX Master Business Model.
-The code is open. What the engine never claims is more important than what it does.
+Anyone may verify, fork, reuse and self-host this. That is deliberate.
+Verification is free forever and needs no account.
 
-## What it actually does
+## What this repo is (and is not)
 
-```
-problem  →  mint  →  bundle  →  register  →  status
-                 │                    │
-                 └── conformance ─────┘   (byte-exact vectors, real pass/fail)
-```
+**This repo is OPEN:**
+- the cryptographic primitives (RFC 8785 JCS, SHA-256, domain-separated leaf, Merkle root)
+- the reference verifier and the published golden test vectors
+- the SDK client to the public verify endpoint
+- the published protocol schemas (the `bundles/` outputs)
 
-- **mint** — takes a problem spec, derives a closed message schema, computes a
-  canonical digest over it, and runs the real golden conformance vectors.
-- **register** — adds the minted protocol to `registry/registry.json` with status
-  flags that are set only from what is genuinely reachable right now.
-- **status** — prints the registry plus a LIVE read from the seal backend
-  (`GET /v1/health`: post-quantum algorithm, epoch, signatures consumed in epoch).
-- **verify** — keyless, free verification of any digest or receipt id against the
-  running backend. No account, no key, open to any stranger. This is the core asset.
-- **seal** — metered write via `POST /v1/notarize` (requires an API key).
-- **proof** — end-to-end demonstration: conformance + live health + a real keyless
-  round-trip. Proves the loop instead of asserting it.
+**This repo is NOT the factory.** Protocol generation, the registry of record,
+conformance authority, hosted issuance and the trust mark are **APEX-operated
+services**, not code published here. You do not need them to verify — you only
+need them if you want APEX to run the service for you at scale.
+
+## The rule this follows
+
+> Give away what becomes stronger when copied. Operate what becomes harder to
+> replace because it accumulates. Verification is copied everywhere on purpose.
+> The canonical ledger, the conformance designation and the mark are the parts
+> that earn — as a service, not as a file.
 
 ## The three signals are never conflated
 
-| Signal | Meaning | How this engine earns it |
-| --- | --- | --- |
-| **VERIFIED** | a record's integrity + time-of-existence is provable | live keyless `verify` against the ledger |
-| **CONFORMANT** | an implementation matches published vectors byte-for-byte | `conformance` runs real golden vectors, fails loudly |
-| **REPUTABLE** | third parties actually adopt and are accountable for it | **not claimed here** — `first_customer`/`regulatory_cited` stay `false` until observed |
+| Signal | Meaning |
+| --- | --- |
+| **VERIFIED** | a record's integrity + time-of-existence is provable (this repo does this, free) |
+| **CONFORMANT** | an implementation matches the published vectors byte-for-byte |
+| **REPUTABLE** | third parties actually adopt it — earned over time, never asserted |
 
 Proof-of-existence is not truth. Integrity is not legality. Conformance is not
-quality. The engine records what exists; it never manufactures adoption.
+quality. This tool records and checks what exists; it never manufactures trust.
 
-## Honest status, by construction
+## How the technology works
 
-Registry metrics (`seals`, `distinct_installers`, `revenue`) start `null` and are
-populated only from live evidence — never promoted from a zero to a number for
-marketing. A freshly minted protocol shows `spec/conf/seal/verify = PASS` because
-those are demonstrable now; `pub/cust = ----` because they are not.
-
-## What it rewires nothing
-
-The engine reuses the **byte-identical** primitives already running in production
-(`@apex/psi-verifier` / `psi-conformance`): RFC 8785 JCS, SHA-256, the domain-
-separated leaf `SHA-256("PSI1:" ‖ hash)`, and the canonical Merkle root (odd node
-promoted, never duplicated). It does not invent new math; it mints protocols on top
-of math that is already live.
-
-It **bridges, never replaces**: minted protocols declare `interoperates_with`
-real standards (MCP, A2A, SCITT, OIDC, W3C-VC, SLSA, in-toto, Sigstore).
+1. A record is hashed with **SHA-256** → a 64-hex content digest.
+2. A **domain-separated leaf** is computed: `SHA-256("PSI1:" ‖ digest)`.
+3. Leaves are combined into a canonical **Merkle root** (odd node promoted, never duplicated).
+4. The root is signed by the live APEX PSI service with **Ed25519 + post-quantum LMS-W4-SHA256**.
+5. **Anyone** can later verify the digest or receipt id, keyless and free, against the ledger.
 
 ## Quick start
 
 ```bash
 npm install
-npm run engine -- list
-npm run engine -- proof
-npm run engine -- register agent-action-evidence
-npm run engine -- status
-npm run engine -- verify <digest-or-receipt-id>
+npm run engine -- proof                                   # conformance + live health + a real verify
+npm run engine -- verify <digest-or-receipt-id>           # keyless, free
+npm run engine -- seal "your decision text"               # metered write (needs APEX_API_KEY)
 ```
 
 Environment:
-- `APEX_PSI_BASE` — backend base URL (defaults to the live psi-api).
+- `APEX_PSI_BASE` — backend base URL (defaults to the live APEX PSI endpoint).
 - `APEX_API_KEY` — required only for `seal` (the metered write path).
-
-## Scope of v1
-
-The engine only mints protocols whose evidence step is expressible through the one
-primitive it can prove live: **seal / verify**. Anything else is refused as
-`UNSUPPORTED` rather than faked. Open a problem, mint it, verify it, register it.
 
 ## License
 
-Apache-2.0.
+Apache-2.0. The verification standard and this SDK are free for the world to use.
