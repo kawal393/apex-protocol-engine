@@ -1,22 +1,41 @@
 {
   "name": "apex-protocol-engine",
-  "version": "0.1.0",
-  "description": "APEX Protocol Engine — the machine that mints coordination protocols, wires them to the live APEX PSI seal/verify primitive, and registers them with honest status. Priority 1 (Engine) + Priority 2 (Registry) of the APEX Master Business Model.",
+  "version": "0.2.0",
+  "description": "Open verification SDK and CLI for the APEX PSI evidence standard. Verify any sealed record against the append-only Merkle ledger, free and keyless, forever.",
   "type": "module",
   "bin": {
-    "engine": "dist/cli.js"
+    "apex-verify": "dist/cli.js"
+  },
+  "main": "dist/engine/primitives.js",
+  "types": "dist/engine/primitives.d.ts",
+  "exports": {
+    "./client": "./dist/client/psi.js",
+    "./engine": "./dist/engine/primitives.js",
+    "./conformance": "./dist/engine/conformance.js"
   },
   "scripts": {
     "build": "tsc -p tsconfig.json",
-    "engine": "tsx src/cli.ts",
+    "prepublishOnly": "node -e \"const fs=require('fs');fs.rmSync('dist',{recursive:true,force:true});\" && tsc -p tsconfig.json",
     "typecheck": "tsc --noEmit -p tsconfig.json",
-    "status": "tsx src/cli.ts status",
-    "proof": "tsx src/cli.ts proof"
+    "proof": "node dist/cli.js proof",
+    "verify": "node dist/cli.js verify",
+    "seal": "node dist/cli.js seal"
   },
-  "engines": {
-    "node": ">=18"
-  },
+  "engines": { "node": ">=18" },
   "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kawal393/apex-protocol-engine.git"
+  },
+  "homepage": "https://ai-governance-standard.com",
+  "bugs": { "url": "https://github.com/kawal393/apex-protocol-engine/issues" },
+  "author": "APEX Infrastructure",
+  "keywords": [
+    "apex", "psi", "verification", "evidence", "merkle-tree", "sha-256",
+    "post-quantum", "lms", "ed25519", "rfc-8785", "jcs",
+    "append-only-ledger", "ai-governance", "provenance", "seal"
+  ],
+  "files": ["dist", "vectors", "public/verify.html", "README.md", "LICENSE"],
   "devDependencies": {
     "tsx": "^4.19.0",
     "typescript": "^5.6.0",
